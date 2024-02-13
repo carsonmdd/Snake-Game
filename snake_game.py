@@ -5,8 +5,6 @@
 import pygame
 from random import randint
 
-INITIAL_WIDTH = 780
-INITIAL_HEIGHT = 600
 SQUARE_SCREEN_WIDTH = 39
 SQUARE_SCREEN_MIDDLE = (19, 14)
 SQUARE_BLACK_BOX_WIDTH = 37
@@ -21,39 +19,31 @@ GRAY = pygame.Color(80, 80, 80)
 LIGHT_GRAY = pygame.Color(128, 128, 128)
 
 class SnakeGame:
-    def __init__(self, high_score = 1, width = 0, height = 0):
+    def __init__(self):
         '''Initialize game variables'''
+
+        pygame.init()
+
+        pygame.display.set_caption("Snake Game")
 
         self.screen = None
         self.running = True
 
-        self.high_score = high_score
+        self.high_score = 1
 
-        self.width = width
-        self.height = height
+        infoObject = pygame.display.Info()
+        self.width = infoObject.current_w * (26 / 57)
+        self.height = infoObject.current_h * (75 / 139)
+
         self.square_side = self.width // SQUARE_SCREEN_WIDTH
 
-        self.snake_coords = [SQUARE_SCREEN_MIDDLE]
-        self.direction = None
-        self.snake_length = 1
-        self.grow_length = 1
-        self.grow_coords = None
-
-        self.apple = False
-        self.apple_coords = ()
+        self.initialize_snake_and_apple()
 
     def run(self) -> None:
         '''Run game instance'''
 
-        pygame.init()
-
         try:
             clock = pygame.time.Clock()
-
-            if self.width == 0 and self.height == 0:
-                infoObject = pygame.display.Info()
-                self.width = infoObject.current_w * (26 / 57)
-                self.height = infoObject.current_h * (75 / 139)
 
             self.resize((self.width, self.height))
 
@@ -273,9 +263,12 @@ class SnakeGame:
 
                 pygame.display.flip()
         finally:
-            pygame.quit()
             if rerun:
-                SnakeGame(self.high_score, self.width, self.height).run()
+                self.running = True
+                self.initialize_snake_and_apple()
+                self.run()
+            else:
+                pygame.quit()
 
     def end_game_handle_events(self, play_again_button: pygame.rect.Rect) -> bool:
         '''Handles user input for the end of the game and returns whether to start a new game or not'''
@@ -340,6 +333,18 @@ class SnakeGame:
         self.screen.blit(play_again_text, play_again_button)
 
         return play_again_button
+    
+    def initialize_snake_and_apple(self) -> None:
+        '''Initializes snake and apple variables'''
+        
+        self.snake_coords = [SQUARE_SCREEN_MIDDLE]
+        self.direction = None
+        self.snake_length = 1
+        self.grow_length = 1
+        self.grow_coords = None
+
+        self.apple = False
+        self.apple_coords = ()
 
 if __name__ == '__main__':
     SnakeGame().run()
