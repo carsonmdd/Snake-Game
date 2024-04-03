@@ -9,7 +9,7 @@ https://github.com/carsonmdd/Snake-Game/assets/130185711/1ab53060-f25f-41ed-a39d
 
 ## Features
 - The snake can move around the screen with the arrow keys.
-- An apple spawns at random coordinates that are not part of the snake's body when the game starts or when the apple is consumed.
+- An apple spawns at random coordinates that do not overlap with the snake's body when the game starts or when the apple is consumed.
 - The snake grows by four squares when it eats an apple.
 - The game ends if the snake runs into its own body or runs into the blue border.
 - The game displays the player's current length in the bottom left of the screen.
