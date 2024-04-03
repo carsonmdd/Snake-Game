@@ -1,6 +1,12 @@
 # Snake-Game
 ## Basic Overview
 This game allows the user to play as a green snake that grows as it eats red apples. The game tracks the user's high score and current score.
+## Demo
+
+
+https://github.com/carsonmdd/Snake-Game/assets/130185711/1ab53060-f25f-41ed-a39d-bb7cb0d692bc
+
+
 ## Features
 - The snake can move around the screen with the arrow keys.
 - An apple spawns at random coordinates that are not part of the snake's body when the game starts or when the apple is consumed.
