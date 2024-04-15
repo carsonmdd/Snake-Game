@@ -2,13 +2,9 @@
 # Box dimensions: 37 square width, 27 square height
 # Left, right, and top border are 1 square thick; bottom border is 2 squares thick
 
-import pygame
-from random import randint
+import pygame, mechanics
 
-SQUARE_SCREEN_WIDTH = 39
-SQUARE_SCREEN_MIDDLE = (19, 14)
-SQUARE_BLACK_BOX_WIDTH = 37
-SQUARE_BLACK_BOX_HEIGHT = 27
+BORDER_WIDTH = 39
 
 BORDER_COLOR = pygame.Color(8, 62, 112)
 BLACK = pygame.Color(0, 0, 0)
@@ -19,310 +15,199 @@ GRAY = pygame.Color(80, 80, 80)
 LIGHT_GRAY = pygame.Color(128, 128, 128)
 
 class SnakeGame:
+
     def __init__(self):
-        '''Initialize game variables'''
-
         pygame.init()
-
         pygame.display.set_caption("Snake Game")
 
-        self.screen = None
-        self.running = True
-
-        self.high_score = 1
+        self._screen = None
+        self._running = True
+        self._high_score = 1
 
         infoObject = pygame.display.Info()
-        self.width = infoObject.current_w * (26 / 57)
-        self.height = infoObject.current_h * (75 / 139)
+        self._width = infoObject.current_w * (26 / 57)
+        self._height = infoObject.current_h * (75 / 139)
+        self._square_side = self._width // BORDER_WIDTH
 
-        self.square_side = self.width // SQUARE_SCREEN_WIDTH
+        self._state = mechanics.State()
 
-        self.initialize_snake_and_apple()
-
-    def run(self) -> None:
+    def run(self):
         '''Run game instance'''
 
         try:
             clock = pygame.time.Clock()
+            self._resize((self._width, self._height))
 
-            self.resize((self.width, self.height))
-
-            while self.running:
+            while self._running:
                 clock.tick(12)
 
-                self.setup()
-                self.grow_snake()
-                self.draw_snake()
-                self.spawn_apple()
-                self.handle_events()
-                self.move()
-                self.try_eat()
+                self._setup()
+                self._handle_events()
+                if not self._state.update():
+                    self._end_game()
+                self._draw_elements()
 
-                if not self.running:
+                if not self._running:
                     break
-
+                
                 pygame.display.flip()
         finally:
             pygame.quit()
 
-    def setup(self) -> None:
+    def _setup(self) -> None:
         '''Draw basic game elements on screen'''
 
-        self.screen.fill(BLACK)
+        self._screen.fill(BLACK)
 
-        self.draw_borders()
-        self.display_length()
-        self.display_high_score()
+        self._draw_borders()
+        self._display_length()
+        self._display_high_score()
 
-    def grow_snake(self) -> None:
-        '''Increases the length of the snake by one square if necessary'''
-
-        if self.snake_length != self.grow_length:
-            self.snake_coords.append(self.grow_coords)
-            self.snake_length += 1
-
-    def draw_snake(self) -> None:
-        '''Draws the snake on the screen'''
-
-        for part in self.snake_coords:
-            self.draw_square(part, GREEN)
-
-    def spawn_apple(self) -> None:
-        '''Draws the apple on the screen'''
-
-        if self.apple:
-            self.draw_square(self.apple_coords, RED)
-            return
-        
-        x, y = self.generate_apple_coords()
-        self.apple_coords = (x, y)
-        self.draw_square(self.apple_coords, RED)
-
-        self.apple = True
-
-    def handle_events(self) -> None:
+    def _handle_events(self) -> None:
         '''Handles user input'''
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.running = False
+                self._running = False
             elif event.type == pygame.VIDEORESIZE:
-                self.resize(event.size)
+                self._resize(event.size)
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
-                    if self.snake_length == 1 or self.direction != "down":
-                        self.direction = "up"
+                    self._state.up()
                 elif event.key == pygame.K_LEFT:
-                    if self.snake_length == 1 or self.direction != "right":
-                        self.direction = "left"
+                    self._state.left()
                 elif event.key == pygame.K_RIGHT:
-                    if self.snake_length == 1 or self.direction != "left":
-                        self.direction = "right"
+                    self._state.right()
                 elif event.key == pygame.K_DOWN:
-                    if self.snake_length == 1 or self.direction != "up":
-                        self.direction = "down"
-    
-    def move(self) -> None:
-        '''Attempts to move the snake by one square'''
+                    self._state.down()
 
-        if self.direction is None:
-            return
-        
-        next_pos = self.get_next_pos()
-        if self.check_game_over(next_pos):
-            self.end_game()
-        else:
-            self.snake_coords[0] = next_pos
-            for i in reversed(range(1, len(self.snake_coords))):
-                self.snake_coords[i] = self.snake_coords[i-1]
+    def _draw_elements(self):
+        '''Draws snake, apple, and background'''
 
-    def try_eat(self) -> None:
-        '''Eats the apple if the snake's head makes contact with the apple'''
-
-        if (self.snake_coords[0] == self.apple_coords):
-            self.apple = False
-            self.grow_length += 4
-            self.grow_coords = self.snake_coords[-1]
+        board = self._state.get_board()
+        for i in range(len(board)):
+            for j in range(len(board[i])):
+                if board[i][j] == "B":
+                    self._draw_square([j, i], BLACK)
+                elif board[i][j] == "G":
+                    self._draw_square([j, i], GREEN)
+                elif board[i][j] == "R":
+                    self._draw_square([j, i], RED)
 
     # ****************
     # HELPER FUNCTIONS
     # ****************
 
-    def resize(self, size: tuple[int, int]) -> None:
+    def _resize(self, size: tuple[int, int]) -> None:
         '''Resizes the screen'''
 
-        self.screen = pygame.display.set_mode(size, pygame.RESIZABLE)
-        self.width = self.screen.get_width()
-        self.height = self.screen.get_height()
-        self.square_side = self.width // SQUARE_SCREEN_WIDTH
+        self._screen = pygame.display.set_mode(size, pygame.RESIZABLE)
+        self._width = self._screen.get_width()
+        self._height = self._screen.get_height()
+        self._square_side = self._width // BORDER_WIDTH
 
-    def draw_borders(self) -> None:
+    def _draw_borders(self) -> None:
         '''Draws the blue borders on the screen'''
 
-        top = pygame.Rect(0, 0, self.width, self.square_side)
-        pygame.draw.rect(self.screen, BORDER_COLOR, top)
-        left = pygame.Rect(0, self.square_side, self.square_side, self.height)
-        pygame.draw.rect(self.screen, BORDER_COLOR, left)
-        right = pygame.Rect(self.width - self.square_side, self.square_side, self.square_side, self.height)
-        pygame.draw.rect(self.screen, BORDER_COLOR, right)
-        bottom = pygame.Rect(self.square_side, self.height - (self.square_side * 2), self.width - self.square_side, self.square_side * 2)
-        pygame.draw.rect(self.screen, BORDER_COLOR, bottom)
+        top = pygame.Rect(0, 0, self._width, self._square_side)
+        pygame.draw.rect(self._screen, BORDER_COLOR, top)
+        left = pygame.Rect(0, self._square_side, self._square_side, self._height)
+        pygame.draw.rect(self._screen, BORDER_COLOR, left)
+        right = pygame.Rect(self._width - self._square_side, self._square_side, self._square_side, self._height)
+        pygame.draw.rect(self._screen, BORDER_COLOR, right)
+        bottom = pygame.Rect(self._square_side, self._height - (self._square_side * 2), self._width - self._square_side, self._square_side * 2)
+        pygame.draw.rect(self._screen, BORDER_COLOR, bottom)
 
-    def display_length(self) -> None:
+    def _display_length(self) -> None:
         '''Displays the snake's current length on the bottom-left of the screen'''
 
-        font = pygame.font.SysFont("arial", int(1.1 * self.square_side))
-        current_length_text = font.render("Length: " + str(self.grow_length), True, WHITE)
+        font = pygame.font.SysFont("arial", int(1.1 * self._square_side))
+        current_length_text = font.render("Length: " + str(self._state.get_display_length()), True, WHITE)
         current_length_textRect = current_length_text.get_rect()
-        current_length_textRect.bottomleft = (self.square_side, 2 * self.height // 2 - .5 * self.square_side)
-        self.screen.blit(current_length_text, current_length_textRect)
+        current_length_textRect.bottomleft = (self._square_side, 2 * self._height // 2 - .5 * self._square_side)
+        self._screen.blit(current_length_text, current_length_textRect)
 
-    def display_high_score(self) -> None:
+    def _display_high_score(self) -> None:
         '''Displays the user's current high score on the bottom-right of the screen'''
 
-        font = pygame.font.SysFont("arial", int(1.1 * self.square_side))
-        high_score_text = font.render("Best: " + str(self.high_score), True, WHITE)
+        font = pygame.font.SysFont("arial", int(1.1 * self._square_side))
+        high_score_text = font.render("Best: " + str(self._high_score), True, WHITE)
         high_score_textRect = high_score_text.get_rect()
-        high_score_textRect.bottomright = (self.width - 1 * self.square_side, 2 * self.height // 2 - .5 * self.square_side)
-        self.screen.blit(high_score_text, high_score_textRect)
+        high_score_textRect.bottomright = (self._width - 1 * self._square_side, 2 * self._height // 2 - .5 * self._square_side)
+        self._screen.blit(high_score_text, high_score_textRect)
 
-    def draw_square(self, part: list[int], color: pygame.Color) -> None:
+    def _draw_square(self, part: list[int], color: pygame.Color) -> None:
         '''Draws a sqare of the given color at the given coordinates'''
 
-        rect = pygame.Rect(part[0] * self.square_side, part[1] * self.square_side, .95 * self.square_side, .95 * self.square_side)
-        pygame.draw.rect(self.screen, color, rect)
+        rect = pygame.Rect((part[0]+1) * self._square_side, (part[1]+1) * self._square_side, .95 * self._square_side, .95 * self._square_side)
+        pygame.draw.rect(self._screen, color, rect)
 
-    def generate_apple_coords(self) -> tuple[int]:
-        '''Generates random coordinates for the apple that do not intersect the snake'''
-
-        x = randint(1, SQUARE_BLACK_BOX_WIDTH)
-        y = randint(1, SQUARE_BLACK_BOX_HEIGHT)
-
-        if self.screen.get_at((x * self.square_side, y * self.square_side)) == GREEN:
-            while True:
-                x = randint(1, SQUARE_BLACK_BOX_WIDTH)
-                y = randint(1, SQUARE_BLACK_BOX_HEIGHT)
-                if self.screen.get_at((x * self.square_side, y * self.square_side)) != GREEN:
-                    break
-                
-        return x, y
-    
-    def get_next_pos(self) -> tuple[int, int]:
-        '''Retrieves the next position of the snake's head based on its current direction'''
-
-        next_pos = None
-
-        if self.direction is None:
-            next_pos = self.snake_coords[0]
-        elif self.direction == "up":
-            next_pos = (self.snake_coords[0][0], self.snake_coords[0][1] - 1)
-        elif self.direction == "left":
-            next_pos = (self.snake_coords[0][0] - 1, self.snake_coords[0][1])
-        elif self.direction == "right":
-            next_pos = (self.snake_coords[0][0] + 1, self.snake_coords[0][1])
-        else:
-            next_pos = (self.snake_coords[0][0], self.snake_coords[0][1] + 1)
-
-        return next_pos
-    
-    def check_game_over(self, next_pos: tuple[int, int]) -> bool:
-        '''Determines if the game is over'''
-
-        x_coord = next_pos[0]
-        y_coord = next_pos[1]
-
-        if (x_coord == 0 or x_coord == 38):
-            return True
-        if (y_coord == 0 or y_coord == 28):
-            return True
-        
-        if (self.screen.get_at((x_coord * self.square_side, 
-                                y_coord * self.square_side)) == GREEN):
-            return True
-        
-        return False
-    
-    def end_game(self) -> None:
+    def _end_game(self) -> None:
         '''Updates the high score if necessary and displays the end screen'''
 
-        if self.grow_length > self.high_score:
-            self.high_score = self.grow_length
+        display_length = self._state.get_display_length()
+        if display_length > self._high_score:
+            self._high_score = display_length
 
         rerun = False
         try:
-            while self.running:
-                self.setup()
-                self.draw_snake()
-                self.spawn_apple()
+            while self._running:
+                self._setup()
+                self._draw_elements()
 
-                play_again_button = self.display_end_screen_text()
-                rerun = self.end_game_handle_events(play_again_button)
+                play_again_button = self._display_end_screen_text()
+                rerun = self._end_game_handle_events(play_again_button)
 
-                if not self.running:
+                if not self._running:
                     break
 
                 pygame.display.flip()
         finally:
             if rerun:
-                self.running = True
-                self.initialize_snake_and_apple()
+                self._running = True
+                self._state.reset()
                 self.run()
             else:
                 pygame.quit()
 
-    def end_game_handle_events(self, play_again_button: pygame.rect.Rect) -> bool:
-        '''Handles user input for the end of the game and returns whether to start a new game or not'''
-
-        rerun = False
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-            elif event.type == pygame.VIDEORESIZE:
-                self.resize(event.size)
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if play_again_button.collidepoint(event.pos):
-                    self.running = False
-                    rerun = True
-        return rerun
-
-    def display_end_screen_text(self) -> pygame.rect.Rect:
+    def _display_end_screen_text(self) -> pygame.rect.Rect:
         '''Displays text for the end game'''
 
-        font = pygame.font.SysFont("arial", int(1.1 * self.square_side))
+        font = pygame.font.SysFont("arial", int(1.1 * self._square_side))
         
-        self.display_game_over_text(font)
-        self.display_end_length_text(font)
+        self._display_game_over_text(font)
+        self._display_end_length_text(font)
 
-        font = pygame.font.SysFont("arial", int(1.5 * self.square_side))
+        font = pygame.font.SysFont("arial", int(1.5 * self._square_side))
 
-        play_again_button = self.display_play_again_button(font)
+        play_again_button = self._display_play_again_button(font)
 
         return play_again_button
-
-    def display_game_over_text(self, font: pygame.font) -> None:
+    
+    def _display_game_over_text(self, font: pygame.font) -> None:
         '''Displays the game over text'''
 
         game_over_text = font.render("GAME OVER", True, WHITE, BLACK)
         game_over_textRect = game_over_text.get_rect()
-        game_over_textRect.center = (self.width // 2, self.height // 2 - 4 * self.square_side)
+        game_over_textRect.center = (self._width // 2, self._height // 2 - 4 * self._square_side)
 
-        self.screen.blit(game_over_text, game_over_textRect)
+        self._screen.blit(game_over_text, game_over_textRect)
 
-    def display_end_length_text(self, font: pygame.font) -> None:
+    def _display_end_length_text(self, font: pygame.font) -> None:
         '''Displays the snake's final length text'''
 
-        length_text = font.render("Length: " + str(self.grow_length), True, WHITE, BLACK)
+        length_text = font.render("Length: " + str(self._state.get_display_length()), True, WHITE, BLACK)
         length_textRect = length_text.get_rect()
-        length_textRect.center = (self.width // 2, self.height // 2 - 2 * self.square_side)
+        length_textRect.center = (self._width // 2, self._height // 2 - 2 * self._square_side)
 
-        self.screen.blit(length_text, length_textRect)
+        self._screen.blit(length_text, length_textRect)
 
-    def display_play_again_button(self, font: pygame.font) -> pygame.rect.Rect:
+    def _display_play_again_button(self, font: pygame.font) -> pygame.rect.Rect:
         '''Displays the play again button and changes the button's shade based on user input'''
 
         play_again_text = font.render(" Play Again ", True, WHITE, GRAY)
         play_again_button = play_again_text.get_rect()
-        play_again_button.center = (self.width // 2, self.height // 2 + 2 * self.square_side)
+        play_again_button.center = (self._width // 2, self._height // 2 + 2 * self._square_side)
 
         mouse_x, mouse_y = pygame.mouse.get_pos()
         if play_again_button.x <= mouse_x <= play_again_button.x + play_again_button.width and play_again_button.y <= mouse_y <= play_again_button.y + play_again_button.height:
@@ -330,21 +215,24 @@ class SnakeGame:
         else:
             play_again_text = font.render(" Play Again ", True, WHITE, GRAY)
 
-        self.screen.blit(play_again_text, play_again_button)
+        self._screen.blit(play_again_text, play_again_button)
 
         return play_again_button
     
-    def initialize_snake_and_apple(self) -> None:
-        '''Initializes snake and apple variables'''
-        
-        self.snake_coords = [SQUARE_SCREEN_MIDDLE]
-        self.direction = None
-        self.snake_length = 1
-        self.grow_length = 1
-        self.grow_coords = None
+    def _end_game_handle_events(self, play_again_button: pygame.rect.Rect) -> bool:
+        '''Handles user input for the end of the game and returns whether to start a new game'''
 
-        self.apple = False
-        self.apple_coords = ()
+        rerun = False
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self._running = False
+            elif event.type == pygame.VIDEORESIZE:
+                self._resize(event.size)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if play_again_button.collidepoint(event.pos):
+                    self._running = False
+                    rerun = True
+        return rerun
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     SnakeGame().run()
