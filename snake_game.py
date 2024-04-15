@@ -31,7 +31,7 @@ class SnakeGame:
 
         self._state = mechanics.State()
 
-    def run(self):
+    def run(self) -> None:
         '''Run game instance'''
 
         try:
@@ -81,7 +81,7 @@ class SnakeGame:
                 elif event.key == pygame.K_DOWN:
                     self._state.down()
 
-    def _draw_elements(self):
+    def _draw_elements(self) -> None:
         '''Draws snake, apple, and background'''
 
         board = self._state.get_board()
