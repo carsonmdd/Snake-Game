@@ -43,12 +43,13 @@ class SnakeGame:
 
                 self._setup()
                 self._handle_events()
-                if not self._state.update():
-                    self._end_game()
-                self._draw_elements()
-
                 if not self._running:
                     break
+                if not self._state.update():
+                    self._end_game()
+                    if not self._running:
+                        break
+                self._draw_elements()
                 
                 pygame.display.flip()
         finally:
@@ -69,6 +70,7 @@ class SnakeGame:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self._running = False
+                break
             elif event.type == pygame.VIDEORESIZE:
                 self._resize(event.size)
             elif event.type == pygame.KEYDOWN:
