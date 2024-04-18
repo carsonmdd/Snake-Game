@@ -39,7 +39,7 @@ class SnakeGame:
             self._resize((self._width, self._height))
 
             while self._running:
-                clock.tick(3)
+                clock.tick(12)
 
                 self._setup()
                 self._handle_events()
