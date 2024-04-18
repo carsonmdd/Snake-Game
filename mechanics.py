@@ -20,6 +20,7 @@ class State:
     
     def update(self) -> bool:
         '''Updates game variables'''
+        
         self._eat()
         if not self._move():
             return False
