@@ -2,7 +2,7 @@ from random import randint
 
 ROWS = 27
 COLS = 37
-MIDDLE = (19, 14)
+MIDDLE = (14, 19) # row, column
 
 class State:
 
@@ -11,20 +11,18 @@ class State:
         self._high_score = 1
 
         self._snake_coords = [MIDDLE]
-        self._board[MIDDLE[1]][MIDDLE[0]] = "G"
+        self._board[MIDDLE[0]][MIDDLE[1]] = "G"
         self._direction = None
         self._snake_length = 1
         self._display_length = 1
         self._grow_coords = None
-
         self._apple_coords = ()
     
     def update(self) -> bool:
         '''Updates game variables'''
-
+        self._eat()
         if not self._move():
             return False
-        self._eat()
         self._grow_snake()
         self._spawn_apple()
 
@@ -70,7 +68,7 @@ class State:
         self._board = self._create_board()
 
         self._snake_coords = [MIDDLE]
-        self._board[MIDDLE[1]][MIDDLE[0]] = "G"
+        self._board[MIDDLE[0]][MIDDLE[1]] = "G"
         self._direction = None
         self._snake_length = 1
         self._display_length = 1
@@ -97,18 +95,20 @@ class State:
         if self._direction is None:
             return True
 
-        next_pos = self._get_next_pos()
-        if self._check_game_over(next_pos):
+        new_pos = self._get_next_pos()
+        if self._check_game_over(new_pos):
             return False
         else:
-            head_col, head_row = next_pos
-            old_tail_col, old_tail_row = self._snake_coords[-1]
-            self._board[head_row][head_col] = "G"
+            new_head_row, new_head_col = new_pos
+            old_tail_row, old_tail_col = self._snake_coords[-1]
+            self._board[new_head_row][new_head_col] = "G"
             self._board[old_tail_row][old_tail_col] = "B"
 
-            self._snake_coords[0] = next_pos
-            for i in reversed(range(1, len(self._snake_coords))):
-                self._snake_coords[i] = self._snake_coords[i-1]
+            for i in range(len(self._snake_coords)):
+                temp = self._snake_coords[i]
+                self._snake_coords[i] = new_pos
+                new_pos = temp
+
             return True
 
     def _eat(self) -> None:
@@ -121,10 +121,10 @@ class State:
 
     def _grow_snake(self) -> None:
         '''Increases the length of the snake by one if needed'''
-
+        
         if self._snake_length != self._display_length:
             self._snake_coords.append(self._grow_coords)
-            col, row = self._grow_coords
+            row, col = self._grow_coords
             self._board[row][col] = "G"
             self._snake_length += 1
 
@@ -134,9 +134,9 @@ class State:
         if self._apple_coords:
             return
         
-        x, y = self._generate_apple_coords()
-        self._apple_coords = (x, y)
-        self._board[y][x] = "R"
+        row, col = self._generate_apple_coords()
+        self._apple_coords = (row, col)
+        self._board[row][col] = "R"
 
     # ****************
     # HELPER FUNCTIONS
@@ -147,28 +147,29 @@ class State:
 
         next_pos = None
 
+        head_row, head_col = self._snake_coords[0]
         if self._direction is None:
             next_pos = self._snake_coords[0]
         elif self._direction == "up":
-            next_pos = (self._snake_coords[0][0], self._snake_coords[0][1] - 1)
+            next_pos = (head_row - 1, head_col)
         elif self._direction == "left":
-            next_pos = (self._snake_coords[0][0] - 1, self._snake_coords[0][1])
+            next_pos = (head_row, head_col - 1)
         elif self._direction == "right":
-            next_pos = (self._snake_coords[0][0] + 1, self._snake_coords[0][1])
+            next_pos = (head_row, head_col + 1)
         else:
-            next_pos = (self._snake_coords[0][0], self._snake_coords[0][1] + 1)
+            next_pos = (head_row + 1, head_col)
 
         return next_pos
     
     def _check_game_over(self, next_pos: tuple[int, int]) -> bool:
         '''Determines if the game is over'''
 
-        col = next_pos[0]
-        row = next_pos[1]
+        row = next_pos[0]
+        col = next_pos[1]
 
-        if (col == -1 or col == 37):
-            return True
         if (row == -1 or row == 27):
+            return True
+        if (col == -1 or col == 37):
             return True
         
         return self._board[row][col] == "G"
@@ -176,14 +177,14 @@ class State:
     def _generate_apple_coords(self) -> tuple[int]:
         '''Generates random coordinates for the apple that do not overlap with the snake'''
         
-        x = randint(0, COLS-1)
-        y = randint(0, ROWS-1)
+        row = randint(0, ROWS-1)
+        col = randint(0, COLS-1)
 
-        if self._board[y][x] == "G":
+        if self._board[row][col] == "G":
             while True:
-                x = randint(0, COLS-1)
-                y = randint(0, ROWS-1)
-                if self._board[y][x] != "G":
+                row = randint(0, ROWS-1)
+                col = randint(0, COLS-1)
+                if self._board[row][col] != "G":
                     break
                 
-        return x, y
+        return row, col
