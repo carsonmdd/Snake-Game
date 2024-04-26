@@ -9,7 +9,11 @@ This game allows the user to play as a green snake that grows as it eats red app
 
 
 
-https://github.com/carsonmdd/Snake-Game/assets/130185711/0da0cf9a-a30f-465e-9eb5-eb0a181b1d9d
+
+
+https://github.com/carsonmdd/Snake-Game/assets/130185711/1a9e10de-f3a1-4cd3-9c99-1da26922dd62
+
+
 
 
 
