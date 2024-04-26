@@ -25,7 +25,7 @@ https://github.com/carsonmdd/Snake-Game/assets/130185711/1a9e10de-f3a1-4cd3-9c99
 ## Features
 - The snake can move around the screen with the arrow keys.
 - An red apple spawns at random coordinates that do not overlap with the snake's body when the game starts or when the apple is consumed.
-- A golden apple has a 20% chance of spawning which allows the snake to grow twice as much as a red apple.
+- A golden apple has a 20% chance of spawning which allows the snake to grow twice as much as if it ate a red apple.
 - The snake's body lights up when it consumes a golden apple.
 - The snake grows by four squares when it eats a apple.
 - The game ends if the snake runs into its own body or runs into the blue border.
