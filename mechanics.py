@@ -155,7 +155,7 @@ class State:
             self._snake_color = "G"
             self._update_color()
             self._powerup_timer -= 1
-        else:
+        elif self._powerup_timer > 1:
             self._powerup_timer -= 1
 
     def _spawn_apple(self) -> None:
