@@ -148,7 +148,7 @@ class State:
 
         if self._new_powerup:
             self._snake_color = "C"
-            self._powerup_timer = 6
+            self._powerup_timer = 8
             self._update_color()
             self._new_powerup = False
         elif self._powerup_timer == 1:
