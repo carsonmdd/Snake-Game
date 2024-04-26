@@ -11,6 +11,8 @@ BLACK = pygame.Color(0, 0, 0)
 WHITE = pygame.Color(255, 255, 255)
 RED = pygame.Color(255, 0, 0)
 GREEN = pygame.Color(0, 255, 0)
+YELLOW = pygame.Color(255, 255, 0)
+CHARTREUSE = pygame.Color(190, 255, 0)
 GRAY = pygame.Color(80, 80, 80)
 LIGHT_GRAY = pygame.Color(128, 128, 128)
 
@@ -67,13 +69,14 @@ class SnakeGame:
     def _handle_events(self) -> None:
         '''Handles user input'''
 
+        keydown = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self._running = False
                 break
             elif event.type == pygame.VIDEORESIZE:
                 self._resize(event.size)
-            elif event.type == pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN and not keydown:
                 if event.key == pygame.K_UP:
                     self._state.up()
                 elif event.key == pygame.K_LEFT:
@@ -82,6 +85,7 @@ class SnakeGame:
                     self._state.right()
                 elif event.key == pygame.K_DOWN:
                     self._state.down()
+                keydown = True
 
     def _draw_elements(self) -> None:
         '''Draws snake, apple, and background'''
@@ -95,6 +99,10 @@ class SnakeGame:
                     self._draw_square([j, i], GREEN)
                 elif board[i][j] == "R":
                     self._draw_square([j, i], RED)
+                elif board[i][j] == "Y":
+                    self._draw_square([j, i], YELLOW)
+                elif board[i][j] == "C":
+                    self._draw_square([j, i], CHARTREUSE)
 
     # ****************
     # HELPER FUNCTIONS

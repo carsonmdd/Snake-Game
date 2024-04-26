@@ -16,8 +16,10 @@ https://github.com/carsonmdd/Snake-Game/assets/130185711/23c76af0-2c08-4245-abb9
 
 ## Features
 - The snake can move around the screen with the arrow keys.
-- An apple spawns at random coordinates that do not overlap with the snake's body when the game starts or when the apple is consumed.
-- The snake grows by four squares when it eats an apple.
+- An red apple spawns at random coordinates that do not overlap with the snake's body when the game starts or when the apple is consumed.
+- A golden apple has a 20% chance of spawning which allows the snake to grow twice as much as a red apple.
+- The snake's body lights up when it consumes a golden apple.
+- The snake grows by four squares when it eats a apple.
 - The game ends if the snake runs into its own body or runs into the blue border.
 - The game displays the player's current length in the bottom left of the screen.
 - The game displays the player's high score in the bottom right of the screen.
@@ -25,6 +27,7 @@ https://github.com/carsonmdd/Snake-Game/assets/130185711/23c76af0-2c08-4245-abb9
 - The "Play Again" button becomes highlighted when hovered over with the cursor.
 - Once the player selects the "Play Again" button, the game is restarted and the player's snake is reset. However, the player's high score is retained.
 - The game's window is resizable.
+
 ## Inspiration
 After my introduction to the pygame library in my early classes, I decided to explore deeper and develop a game I've loved for years: the snake game. Using Cool Math Games' game titled "Snake," I challenged myself to replicate their game as closely as possible from scratch.
 ## Reflection

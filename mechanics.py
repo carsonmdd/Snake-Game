@@ -1,4 +1,4 @@
-from random import randint
+from random import random, randint
 
 ROWS = 27
 COLS = 37
@@ -10,13 +10,19 @@ class State:
         self._board = self._create_board()
         self._high_score = 1
 
+        self._snake_color = "G"
         self._snake_coords = [MIDDLE]
-        self._board[MIDDLE[0]][MIDDLE[1]] = "G"
+        self._board[MIDDLE[0]][MIDDLE[1]] = self._snake_color
         self._direction = None
         self._snake_length = 1
         self._display_length = 1
         self._grow_coords = None
+
+        self._new_powerup = False
+        self._powerup_timer = 0
+
         self._apple_coords = ()
+        self._apple_color = None
     
     def update(self) -> bool:
         '''Updates game variables'''
@@ -25,6 +31,7 @@ class State:
         if not self._move():
             return False
         self._grow_snake()
+        self._set_snake_color()
         self._spawn_apple()
 
         return True
@@ -68,12 +75,16 @@ class State:
 
         self._board = self._create_board()
 
+        self._snake_color = "G"
         self._snake_coords = [MIDDLE]
-        self._board[MIDDLE[0]][MIDDLE[1]] = "G"
+        self._board[MIDDLE[0]][MIDDLE[1]] = self._snake_color
         self._direction = None
         self._snake_length = 1
         self._display_length = 1
         self._grow_coords = None
+
+        self._new_powerup = False
+        self._powerup_timer = 0
 
         self._apple_coords = ()
 
@@ -90,6 +101,17 @@ class State:
 
         return [["B" for i in range(COLS)] for j in range(ROWS)]
 
+    def _eat(self) -> None:
+        '''Eats the apple if the snake's head overlaps with the apple'''
+
+        if (self._snake_coords[0] == self._apple_coords):
+            self._apple_coords = ()
+            self._display_length += 8 if self._apple_color == "Y" else 4
+            self._grow_coords = self._snake_coords[-1]
+
+            if self._apple_color != "R":
+                self._new_powerup = True
+
     def _move(self) -> bool:
         '''Moves the snake by one square if possible'''
 
@@ -102,7 +124,7 @@ class State:
         else:
             new_head_row, new_head_col = new_pos
             old_tail_row, old_tail_col = self._snake_coords[-1]
-            self._board[new_head_row][new_head_col] = "G"
+            self._board[new_head_row][new_head_col] = self._snake_color
             self._board[old_tail_row][old_tail_col] = "B"
 
             for i in range(len(self._snake_coords)):
@@ -112,22 +134,29 @@ class State:
 
             return True
 
-    def _eat(self) -> None:
-        '''Eats the apple if the snake's head overlaps with the apple'''
-
-        if (self._snake_coords[0] == self._apple_coords):
-            self._apple_coords = ()
-            self._display_length += 4
-            self._grow_coords = self._snake_coords[-1]
-
     def _grow_snake(self) -> None:
         '''Increases the length of the snake by one if needed'''
         
         if self._snake_length != self._display_length:
             self._snake_coords.append(self._grow_coords)
             row, col = self._grow_coords
-            self._board[row][col] = "G"
+            self._board[row][col] = self._snake_color
             self._snake_length += 1
+
+    def _set_snake_color(self) -> None:
+        '''Determines and sets the snake's color'''
+
+        if self._new_powerup:
+            self._snake_color = "C"
+            self._powerup_timer = 6
+            self._update_color()
+            self._new_powerup = False
+        elif self._powerup_timer == 1:
+            self._snake_color = "G"
+            self._update_color()
+            self._powerup_timer -= 1
+        else:
+            self._powerup_timer -= 1
 
     def _spawn_apple(self) -> None:
         '''Spawns the apple at a random location'''
@@ -137,7 +166,8 @@ class State:
         
         row, col = self._generate_apple_coords()
         self._apple_coords = (row, col)
-        self._board[row][col] = "R"
+        self._apple_color = "R" if random() <= 0.80 else "Y" 
+        self._board[row][col] = self._apple_color
 
     # ****************
     # HELPER FUNCTIONS
@@ -173,7 +203,7 @@ class State:
         if (col == -1 or col == 37):
             return True
         
-        return self._board[row][col] == "G"
+        return self._board[row][col] == self._snake_color
     
     def _generate_apple_coords(self) -> tuple[int]:
         '''Generates random coordinates for the apple that do not overlap with the snake'''
@@ -181,11 +211,18 @@ class State:
         row = randint(0, ROWS-1)
         col = randint(0, COLS-1)
 
-        if self._board[row][col] == "G":
+        if self._board[row][col] == self._snake_color:
             while True:
                 row = randint(0, ROWS-1)
                 col = randint(0, COLS-1)
-                if self._board[row][col] != "G":
+                if self._board[row][col] != self._snake_color:
                     break
                 
         return row, col
+    
+    def _update_color(self) -> None:
+        '''Updates the snake's color on the board'''
+
+        for coord in self._snake_coords:
+            row, col = coord
+            self._board[row][col] = self._snake_color
