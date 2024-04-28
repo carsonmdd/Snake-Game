@@ -104,7 +104,7 @@ class State:
     def _eat(self) -> None:
         '''Eats the apple if the snake's head overlaps with the apple'''
 
-        if (self._snake_coords[0] == self._apple_coords):
+        if self._snake_coords[0] == self._apple_coords:
             self._apple_coords = ()
             self._display_length += 8 if self._apple_color == "Y" else 4
             self._grow_coords = self._snake_coords[-1]
